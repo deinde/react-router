@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import { BrowserRouter as Router, Link, NavLink, Redirect } from 'react-router-dom';
+import { BrowserRouter as Router, Link, NavLink, Redirect, Prompt } from 'react-router-dom';
 import Route from 'react-router-dom/Route';
 
 
-const User = ({ match }) => {
+const User = (props) => {
   const style = {
     one: {
       display: 'flex',
@@ -19,7 +19,7 @@ const User = ({ match }) => {
   }
   return (
     <div style={style.one}>
-      <h1>Welcome {match.params.username}</h1>
+      <h1>Welcome {props.username}</h1>
       <form action='/user/' method='GET'>
         <fieldset>
           <legend>This is a form</legend>
@@ -41,11 +41,12 @@ class App extends Component {
     loggedIn: false
   }
 
-  handleLoggedIn = (prevState) => {
-    alert('working')
-    this.setState({
-      loggedIn: !prevState
+  handleLoggedIn = () => {
+    console.log('working', this.state.loggedIn)
+    this.setState(prevState => ({
+      loggedIn: !prevState.loggedIn
     })
+    )
   }
   render() {
     return (
@@ -55,10 +56,16 @@ class App extends Component {
             <ul>
               <li><NavLink activeStyle={{ color: 'lightblue' }} to='/' exact >HOME</NavLink></li>
               <li><NavLink activeStyle={{ color: 'lightblue' }} to='/login' exact  >LOGIN</NavLink></li>
-              <li><NavLink activeStyle={{ color: 'lightblue' }} to='/user' exact >USER</NavLink></li>
+              <li><NavLink activeStyle={{ color: 'lightblue' }} to='/user/peter' exact >USER</NavLink></li>
               <li><NavLink activeStyle={{ color: 'lightblue' }} to='/about/' exact >ABOUT</NavLink></li>
             </ul>
-            <input type="button" value='logged In' onClick={this.handleLoggedIn.bind(this)} />
+            <Prompt
+              when={!this.state.loggedIn}
+              message={(location) => {
+                return location.pathname.startsWith('/user') ? 'Are you sure you want route cause you not logged in!' : true;
+              }}
+            />
+            <input type="button" value={this.state.loggedIn ? 'logged In' : 'logged Out'} onClick={this.handleLoggedIn.bind(this)} />
           </nav>
           <Route path='/' exact strict
             render={
@@ -70,10 +77,12 @@ class App extends Component {
             } />
           <Route path='/login' exact strict component={User} />
 
-          <Route path='/user/:username' exact strict component={User} />
+          <Route path='/user/:username' exact strict render={({ match }) => (
+            this.state.loggedIn ? (<User username={match.params.username} />) : (<Redirect to='/' />)
+          )} />
         </div>
       </Router>
-    )
+    );
   }
 }
 
